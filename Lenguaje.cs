@@ -1,5 +1,5 @@
 /*
-REQUERIMIENTOS:
+REQUERIMIENTOS AUTOMATAS I:
     1) Indicar en el error Léxico o sintáctico, el número de línea y caracter [DONE]
     2) En el log colocar el nombre del archivo a compilar, la fecha y la hora [DONE]
     3)  Agregar el resto de asignaciones [DONE]
@@ -14,7 +14,7 @@ REQUERIMIENTOS:
     4) Emular el Console.Write() & Console.WriteLine() [DONE] 
     5) Emular el Console.Read() & Console.ReadLine() [DONE]
 
-NUEVOS REQUERIMIENTOS:
+NUEVOS REQUERIMIENTOS AUTOMATAS I:
     1) Concatenación [DONE]
     2) Inicializar una variable desde la declaración [DONE]
     3) Evaluar las expresiones matemáticas [DONE]
@@ -22,10 +22,15 @@ NUEVOS REQUERIMIENTOS:
     5) Modificar la variable con el resto de operadores (Incremento de factor y termino) [DONE]
     6) Implementar el else [DONE]
 
-    REQUERIMIENTOS AUTOMATAS II:
-    1) Implementar set y get para la clase token
-    2) Implementar parametros por default en el constructor del archivo lexico
-    3)
+
+
+    ***********************REQUERIMIENTOS AUTOMATAS II:********************************
+    1) Implementar set y get para la clase token (listo)
+    2) Implementar parametros por default en el constructor del archivo lexico (listo)
+    3) Implementar linea y columna en los errores semanticos[Listo]
+    4) Implementar maxTipo en la asignacion, es decir, cuando se haga v.setValor(r)
+    5) Implementar el casteo en el stack
+    ***********************************************************************************
 */
 
 using System;
@@ -71,7 +76,7 @@ namespace Semantica_1
             log.WriteLine("Lista de variables: ");
             foreach (Variable elemento in l)
             {
-                log.WriteLine($"{elemento.getNombre()} {elemento.GetTipoDato()} {elemento.getValor()}");
+                log.WriteLine($"{elemento.getNombre()} {elemento.getTipoDato()} {elemento.getValor()}");
             }
         }
 
@@ -253,6 +258,8 @@ namespace Semantica_1
         Id = Console.Read() (DONE)
         Id = Console.ReadLine() (DONE)
         */
+
+        //4) Implementar maxTipo en la asignacion, es decir, cuando se haga v.setValor(r)
         private void Asignacion()
         {
             maxTipo = Variable.TipoDato.Char;
@@ -278,7 +285,7 @@ namespace Semantica_1
             }
             else if (Contenido == "=")
             {
-               match("=");
+                match("=");
                 if (Contenido == "Console")
                 {
                     match("Console");
@@ -299,7 +306,7 @@ namespace Semantica_1
                             throw new Error("Entrada invalida: Solo se permiten numeros enteros.");
                         }
                         s.Push(numero);
-                        v?.setValor(numero);
+                        v?.setValor(numero, maxTipo);
                     }
                     match(")");
                 }
@@ -307,7 +314,7 @@ namespace Semantica_1
                 {
                     Expresion();
                     r = s.Pop();
-                    v.setValor(r);
+                    v.setValor(r, maxTipo);
                 }
             }
             else if (Contenido == "+=")
@@ -381,12 +388,12 @@ namespace Semantica_1
         //Condicion -> Expresion operadorRelacional Expresion
         private bool Condicion()
         {
-            maxTipo=Variable.TipoDato.Char;
+            maxTipo = Variable.TipoDato.Char;
             Expresion();
             float valor1 = s.Pop();
             string operador = Contenido;
             match(Tipos.OperadorRelacional);
-            maxTipo=Variable.TipoDato.Char;
+            maxTipo = Variable.TipoDato.Char;
             Expresion();
             float valor2 = s.Pop();
             switch (operador)
@@ -595,34 +602,78 @@ namespace Semantica_1
             }
         }
         //Factor -> numero | identificador | (Expresion)
+        
         private void Factor()
         {
             if (Clasificacion == Tipos.Numero)
             {
-                Variable.valorToTipoDato(float.Parse(Contenido));
+                // Si el tipo de dato del número es mayor al tipo de dato actual, cambiarlo
+                if (maxTipo < Variable.valorToTipoDato(float.Parse(Contenido)))
+                {
+                    maxTipo = Variable.valorToTipoDato(float.Parse(Contenido));
+                }
+
                 s.Push(float.Parse(Contenido));
-                //Console.Write(getContenido() + " ");
                 match(Tipos.Numero);
             }
             else if (Clasificacion == Tipos.Identificador)
             {
                 Variable? v = l.Find(variable => variable.getNombre() == Contenido);
+
                 if (v == null)
                 {
-                    throw new Error("Sintaxis: la variable " + Contenido + " no está definida", log, linea, columna);
+                    throw new Error("Sintaxis: la variable " + Contenido + " no está definida ", log, linea, columna);
                 }
+
+                if (maxTipo < v.getTipoDato())
+                {
+                    maxTipo = v.getTipoDato();
+                }
+
                 s.Push(v.getValor());
-                //Console.Write(getContenido() + " ");
                 match(Tipos.Identificador);
             }
             else
             {
                 match("(");
+
+                Variable.TipoDato tipoCasteo = Variable.TipoDato.Char;
+                bool huboCasteo = false;
+
+                // Verificar si hay un tipo de dato explícito (casteo)
+                if (Clasificacion == Tipos.TipoDato)
+                {
+                    switch (Contenido)
+                    {
+                        case "int": tipoCasteo = Variable.TipoDato.Int; break;
+                        case "float": tipoCasteo = Variable.TipoDato.Float; break;
+                    }
+                    match(Tipos.TipoDato);
+                    match(")");
+                    match("(");
+                    huboCasteo = true;
+                }
+
                 Expresion();
+
+                if (huboCasteo)
+                {
+                    float valor = s.Pop(); // Obtener el valor actual de la pila
+                    switch (tipoCasteo)
+                    {
+                        case Variable.TipoDato.Int:
+                            float valorEntero = valor - (valor % 1); // valor total - parte decimal
+                            valor = valorEntero;
+                            break;
+                        case Variable.TipoDato.Float:
+                            // Ya es float, no cambia
+                            break;
+                    }
+                    s.Push(valor); // Regresar el valor casteado al stack
+                    maxTipo = tipoCasteo; // Actualizar el tipo máximo
+                }
                 match(")");
             }
         }
-        /*SNT = Producciones = Invocar el metodo
-        ST  = Tokens (Contenido | Classification) = Invocar match    Variables -> tipo_dato Lista_identificadores; Variables?*/
     }
 }

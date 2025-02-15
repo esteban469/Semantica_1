@@ -29,7 +29,19 @@ namespace Semantica_1
             }
             else
             {
-                throw new Error("Semántico: no se puede asignar un " + valorToTipoDato(valor) + " a un " + tipo);
+                throw new Error("Semántico: no se puede asignar un " + valorToTipoDato(valor) + " a un " + tipo + " en: [" + Lexico.linea + "," + Lexico.columna + "]");
+            }
+        }
+        public void setValor(float valor, TipoDato maxTipo)
+        {
+            if (maxTipo <= tipo)
+            {
+                this.valor = valor;
+            }
+            else
+            {
+                Console.WriteLine("Este se esta ejecutando");
+                throw new Error("Semántico: no se puede asignar un " + maxTipo + " a un " + tipo + " en: [" + Lexico.linea + "," + Lexico.columna + "]");
             }
         }
 
@@ -62,7 +74,7 @@ namespace Semantica_1
         {
             return nombre;
         }
-        public TipoDato GetTipoDato()
+        public TipoDato getTipoDato()
         {
             return tipo;
         }

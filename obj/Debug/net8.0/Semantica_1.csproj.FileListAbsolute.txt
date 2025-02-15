@@ -12,3 +12,4 @@ C:\Users\Esteban\Documents\ITQ\AUTOMATAS\Semantica_1\obj\Debug\net8.0\refint\Sem
 C:\Users\Esteban\Documents\ITQ\AUTOMATAS\Semantica_1\obj\Debug\net8.0\Semantica_1.pdb
 C:\Users\Esteban\Documents\ITQ\AUTOMATAS\Semantica_1\obj\Debug\net8.0\Semantica_1.genruntimeconfig.cache
 C:\Users\Esteban\Documents\ITQ\AUTOMATAS\Semantica_1\obj\Debug\net8.0\ref\Semantica_1.dll
+C:\Users\Esteban\Documents\ITQ\AUTOMATAS\Semantica_1\obj\Debug\net8.0\Semantica_1.sourcelink.json
